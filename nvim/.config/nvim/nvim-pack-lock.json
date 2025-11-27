@@ -1,0 +1,44 @@
+{
+  "plugins": {
+    "gitsigns.nvim": {
+      "rev": "42d6aed4e94e0f0bbced16bbdcc42f57673bd75e",
+      "src": "https://github.com/lewis6991/gitsigns.nvim"
+    },
+    "mason-lspconfig.nvim": {
+      "rev": "80c0130c5f16b551865a69e832f1feadeedb5fbe",
+      "src": "https://github.com/mason-org/mason-lspconfig.nvim"
+    },
+    "mason.nvim": {
+      "rev": "44d1e90e1f66e077268191e3ee9d2ac97cc18e65",
+      "src": "https://github.com/mason-org/mason.nvim"
+    },
+    "mini.completion": {
+      "rev": "4d451f82f193f6751719935a63d16ccb79a76e0b",
+      "src": "https://github.com/nvim-mini/mini.completion"
+    },
+    "mini.files": {
+      "rev": "22c64f010eef047ed270e29e7cc266cd4740787e",
+      "src": "https://github.com/nvim-mini/mini.files"
+    },
+    "mini.pick": {
+      "rev": "aa242acc17683515d8f749552aebe061bced9132",
+      "src": "https://github.com/nvim-mini/mini.pick"
+    },
+    "miniharp.nvim": {
+      "rev": "29c50dd622e98e2fc5e12f71fba29e3fc34f1425",
+      "src": "https://github.com/vieitesss/miniharp.nvim"
+    },
+    "no-neck-pain.nvim": {
+      "rev": "4bc52782524fd50c5658685d584df6fa48fe49f9",
+      "src": "https://github.com/shortcuts/no-neck-pain.nvim"
+    },
+    "nvim-lspconfig": {
+      "rev": "92ee7d42320edfbb81f3cad851314ab197fa324a",
+      "src": "https://github.com/neovim/nvim-lspconfig"
+    },
+    "oil.nvim": {
+      "rev": "6b59a6cf623fa2245c7454ddb458df5bdb6615d3",
+      "src": "https://github.com/stevearc/oil.nvim"
+    }
+  }
+}

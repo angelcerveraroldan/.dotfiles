@@ -177,8 +177,7 @@ sway_config()
 	log_info "Stowing sway config"
 
 	cd "$REPO_DIR"
-	stow -Rvt "$HOME" nvim
-
+	stow -Rvt "$HOME" sway
 }
 
 sway_install()

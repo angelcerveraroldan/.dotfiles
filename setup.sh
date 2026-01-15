@@ -217,6 +217,7 @@ main()
 
 	keyd_setup
 	neovim_setup
+	sway_setup
 }
 
 main "$@"

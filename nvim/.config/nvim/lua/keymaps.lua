@@ -21,16 +21,18 @@ vim.keymap.set("n", "<Leader>fo", ":lua vim.lsp.buf.format()<CR>", s) -- Format 
 vim.keymap.set("v", "<Leader>p", '"_dP') -- Paste without overwriting the default register
 vim.keymap.set("x", "y", [["+y]], s) -- Yank to the system clipboard in visual mode
 
+-- LSP bindings
 local opts = { noremap = true, silent = true }
-vim.keymap.set("n", "grd", "<cmd>lua vim.lsp.buf.definition()<CR>", opts) -- Go to definition
-
+vim.keymap.set("n", "<Leader>ld", "<cmd>lua vim.lsp.buf.definition()<CR>", opts) -- Go to definition
+vim.keymap.set("n", "<Leader>la", "<cmd>lua vim.lsp.buf.code_action()<CR>" )
+vim.keymap.set("n", "<Leader>le", "<cmd>lua vim.diagnostic.open_float()<Cr>")
 
 -------------------
 -- PUGIN KEYMAPS --
 -------------------
 
 -- Oil keymaps
-vim.keymap.set("n", "<leader>ft", "<cmd>Oil<CR>", 
+vim.keymap.set("n", "<leader>ft", "<cmd>Oil<CR>",
     { desc = "Open the file explorer" })
 
 -- Miniharp keymaps
@@ -44,7 +46,7 @@ vim.keymap.set("n", "<Leader>sf", "<cmd>Pick files<CR>")
 vim.keymap.set("n", "<Leader>sg", "<cmd>Pick grep_live<CR>")
 
 -- No more neck pain keymaps
-vim.keymap.set("n", "<leader>ob", "<cmd>NoNeckPain<CR>", 
+vim.keymap.set("n", "<leader>ob", "<cmd>NoNeckPain<CR>",
     { desc = "Open side buffer" })
 
 -- Miniautocomplete keymaps

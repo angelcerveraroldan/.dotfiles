@@ -9,6 +9,8 @@ set $down j
 set $up k
 set $right l
 
+set $browser qutebrowser
+
 # Your preferred terminal emulator
 set $term alacritty
 
@@ -67,6 +69,9 @@ input type:keyboard {
 #
     # Start a terminal
     bindsym $mod+Return exec $term
+
+    # Start browser
+    bindsym $mod+q exec $browser
 
     # Kill focused window
     bindsym $mod+c kill

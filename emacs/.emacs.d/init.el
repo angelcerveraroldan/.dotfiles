@@ -6,9 +6,6 @@
 (setq display-line-numbers-type 'relative)
 (global-display-line-numbers-mode 1)
 
-;; Dark mode
-(load-theme 'tango-dark)
-
 ;; Set up package.el to work with MELPA
 (require 'package)
 
@@ -16,8 +13,23 @@
              '("melpa" . "https://melpa.org/packages/"))
 (package-initialize)
 
+;; Make sure that emacs uses the same path as a shell would
+(when (memq window-system '(mac ns x wayland))
+  (exec-path-from-shell-initialize))
+(when (daemonp)
+  (exec-path-from-shell-initialize))
+
 (unless package-archive-contents
   (package-refresh-contents))
+
+;; Mono themes
+(use-package almost-mono-themes
+  :config
+  ;; (load-theme 'almost-mono-black t)
+  (load-theme 'almost-mono-gray t)
+  ;; (load-theme 'almost-mono-cream t)
+  ;; (load-theme 'almost-mono-white t)
+  )
 
 (unless (package-installed-p 'evil)
   (package-install 'evil))
@@ -30,6 +42,29 @@
 (defvar my/leader-map (make-sparse-keymap)
   "Keymap for Space-leader shortcuts.")
 
+;; When we jump to a linked note in orgmode, use the same window
+(with-eval-after-load 'org
+  (setf (cdr (assq 'file org-link-frame-setup)) #'find-file))
+
+;; Custom functions used lated
+
+(defun my/open-daily-notes ()
+  "Open org file for daily notes"
+  (interactive)
+  (find-file "~/notes/work/standup.org"))
+
+(defun my/reload-init ()
+  "Reload init file"
+  (interactive)
+  (load-file user-init-file))
+
+(defun my/find-file-home ()
+  "Find file starting from ~/."
+  (interactive)
+  (let ((default-directory "~/"))
+    (call-interactively #'find-file)))
+
+
 ;; Make sure that my bindings can be used inside grep buffers
 (with-eval-after-load 'evil
   (dolist (m (list evil-normal-state-map   ; Normal editing
@@ -41,10 +76,6 @@
   (define-key evil-normal-state-map (kbd "SPC") my/leader-map))
 
 ;; Easily reload the init file
-(defun my/reload-init ()
-  "Reload init file"
-  (interactive)
-  (load-file user-init-file))
 (define-key my/leader-map (kbd "r r") #'my/reload-init)
 
 ;; Open a terminal buffer
@@ -58,16 +89,9 @@
 (define-key my/leader-map (kbd "b w") #'save-buffer) ; save
 (define-key my/leader-map (kbd "b q") #'kill-buffer) ; quit the buffer - not the window!
 
-
 ;; File
 (define-key my/leader-map (kbd "f t") #'dired)     ; Open file tree
 (define-key my/leader-map (kbd "f s") #'find-file) ; Search files
-
-(defun my/find-file-home ()
-  "Find file starting from ~/."
-  (interactive)
-  (let ((default-directory "~/"))
-    (call-interactively #'find-file)))
 (define-key my/leader-map (kbd "f h") #'my/find-file-home)
 
 
@@ -106,11 +130,15 @@
 ;; General
 (define-key my/leader-map (kbd "x") #'execute-extended-command)
 
+ 
+;; Open important files
+(define-key my/leader-map (kbd "o d") #'my/open-daily-notes)
+
 ;; LSP
 (require 'eglot)
+
 (with-eval-after-load 'rust-mode
   (add-hook 'rust-mode-hook #'eglot-ensure))
-
 
 (define-key my/leader-map (kbd "l r") #'eglot-rename)
 (define-key my/leader-map (kbd "l a") #'eglot-code-actions)
@@ -132,7 +160,8 @@
  '(custom-safe-themes
    '("545827c17d917c9bd2421f9a8d20e93ad628f5f102dbd710db86e8ddbc800b4a"
      default))
- '(package-selected-packages '(corfu evil magit rust-mode sunburn-theme)))
+ '(package-selected-packages
+   '(corfu evil exec-path-from-shell magit rust-mode sunburn-theme)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

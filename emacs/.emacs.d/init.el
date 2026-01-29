@@ -8,6 +8,9 @@
 
 ;; Set up package.el to work with MELPA
 (require 'package)
+(require 'evil)
+(require 'eglot)
+(require 'corfu)
 
 (add-to-list 'package-archives
              '("melpa" . "https://melpa.org/packages/"))
@@ -26,17 +29,20 @@
 (use-package almost-mono-themes
   :config
   ;; (load-theme 'almost-mono-black t)
-  (load-theme 'almost-mono-gray t)
-  ;; (load-theme 'almost-mono-cream t)
+  ;; (load-theme 'almost-mono-gray t)
+  (load-theme 'almost-mono-cream t)
   ;; (load-theme 'almost-mono-white t)
   )
 
 (unless (package-installed-p 'evil)
   (package-install 'evil))
 
-(require 'evil)
-(setq evil-undo-system 'undo-redo) ; TODO: Redo not working properly
+(evil-set-undo-system 'undo-redo) ;; enable undo and redo
 (evil-mode 1)
+
+(evil-mc-mode 1)
+(global-evil-mc-mode 1)
+
 
 ;; Leader keymap
 (defvar my/leader-map (make-sparse-keymap)
@@ -45,6 +51,7 @@
 ;; When we jump to a linked note in orgmode, use the same window
 (with-eval-after-load 'org
   (setf (cdr (assq 'file org-link-frame-setup)) #'find-file))
+
 
 ;; Custom functions used lated
 
@@ -64,6 +71,12 @@
   (let ((default-directory "~/"))
     (call-interactively #'find-file)))
 
+(defun my/compile-from-root ()
+  "Run compile command from the root"
+  (interactive)
+  (let ((default-directory (project-root (project-current t))))
+    (call-interactively #'compile)))
+
 
 ;; Make sure that my bindings can be used inside grep buffers
 (with-eval-after-load 'evil
@@ -71,6 +84,11 @@
                    evil-motion-state-map   ; read-only / special buffers
                    evil-visual-state-map)) ; Selections
     (define-key m (kbd "SPC") my/leader-map))) ; Add my space keybinding
+
+(with-eval-after-load 'evil
+  (evil-define-key 'normal dired-mode-map (kbd "SPC") my/leader-map)
+  (evil-define-key 'motion dired-mode-map (kbd "SPC") my/leader-map)
+  (evil-define-key 'visual dired-mode-map (kbd "SPC") my/leader-map))
 
 (with-eval-after-load 'evil
   (define-key evil-normal-state-map (kbd "SPC") my/leader-map))
@@ -94,11 +112,20 @@
 (define-key my/leader-map (kbd "f s") #'find-file) ; Search files
 (define-key my/leader-map (kbd "f h") #'my/find-file-home)
 
+;; Cursors
+(define-key my/leader-map (kbd "c b") #'evil-mc-make-cursor-in-visual-selection-beg)
+(define-key my/leader-map (kbd "c e") #'evil-mc-make-cursor-in-visual-selection-end)
+(define-key my/leader-map (kbd "c n") #'evil-mc-make-and-goto-next-match)
+(define-key my/leader-map (kbd "c u") #'evil-mc-undo-last-added-cursor)
+(define-key my/leader-map (kbd "c q") #'evil-mc-undo-all-cursors)
+
+
+
 
 ;; Window
 (define-key my/leader-map (kbd "w v") #'split-window-right)
 (define-key my/leader-map (kbd "w s") #'split-window-below)
-(define-key my/leader-map (kbd "w d") #'delete-window)
+(define-key my/leader-map (kbd "w q") #'delete-window) ; Quit
 (define-key my/leader-map (kbd "w o") #'delete-other-windows)
 ;; Windows - Move between them
 (define-key my/leader-map (kbd "w h") #'windmove-left)
@@ -109,12 +136,11 @@
 ;; Project
 (define-key my/leader-map (kbd "p f") #'project-find-file)   ; search files by name
 (define-key my/leader-map (kbd "p s") #'project-find-regexp) ; search files by content
-(define-key my/leader-map (kbd "p c") #'compile)             ; compile project
+(define-key my/leader-map (kbd "p c") #'my/compile-from-root )  ; compile project
 
 ;; Search
 (define-key my/leader-map (kbd "s s") #'isearch-forward)
 (define-key my/leader-map (kbd "s g") #'rgrep) ; Search grep
-(define-key my/leader-map (kbd "s n") #'next-error) ; Next result of the search
 (define-key my/leader-map (kbd "s p") #'previous-error) ; Last search result
 
 ;; Git
@@ -135,20 +161,33 @@
 (define-key my/leader-map (kbd "o d") #'my/open-daily-notes)
 
 ;; LSP
-(require 'eglot)
 
 (with-eval-after-load 'rust-mode
   (add-hook 'rust-mode-hook #'eglot-ensure))
+
+(with-eval-after-load 'go-mode
+  (add-hook 'go-mode-hook #'eglot-ensure))
+
+;; Stop eldoc from taking up an existing window - always start at the bottom
+(setq eldoc-echo-area-using-multiple-p nil)
+(with-eval-after-load 'eldoc
+  (add-to-list 'display-buffer-alist
+	       '("\\*eldoc\\*"
+		 (display-buffer-in-side-window)
+		 (side . bottom)
+		 (slot . 1)
+		 (window-height . 0.2))))
 
 (define-key my/leader-map (kbd "l r") #'eglot-rename)
 (define-key my/leader-map (kbd "l a") #'eglot-code-actions)
 (define-key my/leader-map (kbd "l f") #'eglot-format)
 (define-key my/leader-map (kbd "l d") #'xref-find-definitions)
 (define-key my/leader-map (kbd "l e") #'flymake-show-buffer-diagnostics)
-(define-key my/leader-map (kbd "l h") #'eldoc)
+(define-key my/leader-map (kbd "l n") #'flymake-goto-next-error)
+(define-key my/leader-map (kbd "l p") #'flymake-goto-prev-error)
+(define-key my/leader-map (kbd "l h") #'eldoc-doc-buffer)
 
 ;; Auto complete
-(require 'corfu)
 (setq corfu-auto t) ; popup automatically
 (global-corfu-mode 1)
 
@@ -161,7 +200,8 @@
    '("545827c17d917c9bd2421f9a8d20e93ad628f5f102dbd710db86e8ddbc800b4a"
      default))
  '(package-selected-packages
-   '(corfu evil exec-path-from-shell magit rust-mode sunburn-theme)))
+   '(corfu evil evil-mc exec-path-from-shell magit rust-mode
+	   sunburn-theme)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

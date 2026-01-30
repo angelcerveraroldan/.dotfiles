@@ -2,6 +2,9 @@
 (scroll-bar-mode -1)           ; Hide the always-visible scrollbar
 (setq inhibit-splash-screen t) ; Remove the "Welcome to GNU Emacs" splash screen
 (setq use-file-dialog nil)     ; Ask for textual confirmation instead of GUI
+(setq-default tab-width 4)
+
+(setq browse-url-browser-function 'eww-browse-url)
 
 (setq display-line-numbers-type 'relative)
 (global-display-line-numbers-mode 1)
@@ -144,13 +147,12 @@
 (define-key my/leader-map (kbd "s p") #'previous-error) ; Last search result
 
 ;; Git
-(with-eval-after-load 'magit
-  (define-key my/leader-map (kbd "g g") #'magit-status)
-  (define-key my/leader-map (kbd "g c") #'magit-commit-create)
-  (define-key my/leader-map (kbd "g l") #'magit-log-current)
-  (define-key my/leader-map (kbd "g b") #'magit-branch)
-  (define-key my/leader-map (kbd "g p") #'magit-push-current)
-  (define-key my/leader-map (kbd "g f") #'magit-fetch))
+(define-key my/leader-map (kbd "g g") #'magit-status)
+(define-key my/leader-map (kbd "g c") #'magit-commit-create)
+(define-key my/leader-map (kbd "g l") #'magit-log-current)
+(define-key my/leader-map (kbd "g b") #'magit-branch)
+(define-key my/leader-map (kbd "g p") #'magit-push-current)
+(define-key my/leader-map (kbd "g f") #'magit-fetch)
 
 
 ;; General

@@ -209,6 +209,24 @@ sway_setup()
 	sway_config
 }
 
+alacritty_config()
+{
+	log_info "Stowing alacritty config"
+
+	cd "$REPO_DIR"
+	stow -Rvt "$HOME" alacritty
+}
+
+alacritty_setup()
+{
+	if ! command -v alacritty >/dev/null 2>&1
+	then
+		alacritty_install
+	fi
+
+	alacritty_config
+}
+
 main()
 {
 	ensure_os

@@ -9,8 +9,12 @@ set $down j
 set $up k
 set $right l
 
+set $browser qutebrowser
+set $lockscreen swaylock
+set $emacs emacs
+
 # Your preferred terminal emulator
-set $term alacritty
+set $term kitty
 
 # Your preferred application launcher
 set $menu wmenu-run
@@ -65,8 +69,16 @@ input type:keyboard {
 #
 # Basics:
 #
+    # lock screen 
+    bindsym $mod+Shift+l+s exec $lockscreen
+
     # Start a terminal
     bindsym $mod+Return exec $term
+
+    # Start browser
+    bindsym $mod+q exec $browser
+    bindsym $mod+e exec $emacs
+
 
     # Kill focused window
     bindsym $mod+c kill
@@ -151,7 +163,7 @@ input type:keyboard {
     # Switch the current container between different layout styles
     bindsym $mod+s layout stacking
     bindsym $mod+w layout tabbed
-    bindsym $mod+e layout toggle split
+    bindsym $mod+p layout toggle split
 
     # Make the current focus fullscreen
     bindsym $mod+f fullscreen

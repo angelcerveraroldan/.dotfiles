@@ -1,70 +1,65 @@
-(tool-bar-mode -1)             ; Hide the outdated icons
-(scroll-bar-mode -1)           ; Hide the always-visible scrollbar
-(setq inhibit-splash-screen t) ; Remove the "Welcome to GNU Emacs" splash screen
-(setq use-file-dialog nil)     ; Ask for textual confirmation instead of GUI
-(setq-default tab-width 4)
+;; -----------------------------------------------------------------------------
+;; Package system (package.el + use-package)
+;; -----------------------------------------------------------------------------
 
-(setq browse-url-browser-function 'eww-browse-url)
-
-(setq display-line-numbers-type 'relative)
-(global-display-line-numbers-mode 1)
-
-;; Set up package.el to work with MELPA
 (require 'package)
-(require 'evil)
-(require 'eglot)
-(require 'corfu)
 
-(add-to-list 'package-archives
-             '("melpa" . "https://melpa.org/packages/"))
+(setq package-archives
+      '(("gnu"   . "https://elpa.gnu.org/packages/")
+        ("melpa" . "https://melpa.org/packages/")))
+
 (package-initialize)
-
-;; Make sure that emacs uses the same path as a shell would
-(when (memq window-system '(mac ns x wayland))
-  (exec-path-from-shell-initialize))
-(when (daemonp)
-  (exec-path-from-shell-initialize))
 
 (unless package-archive-contents
   (package-refresh-contents))
 
-;; Mono themes
-(use-package almost-mono-themes
-  :config
-  ;; (load-theme 'almost-mono-black t)
-  ;; (load-theme 'almost-mono-gray t)
-  (load-theme 'almost-mono-cream t)
-  ;; (load-theme 'almost-mono-white t)
-  )
+;; Keep Emacs Customize noise out of init.el
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(when (file-exists-p custom-file)
+  (load custom-file 'noerror 'nomessage))
 
-(unless (package-installed-p 'evil)
-  (package-install 'evil))
+;; Bootstrap use-package
+(unless (package-installed-p 'use-package)
+  (package-install 'use-package))
+(require 'use-package)
 
-(evil-set-undo-system 'undo-redo) ;; enable undo and redo
-(evil-mode 1)
+(setq use-package-always-ensure t
+      use-package-expand-minimally t)
 
-(evil-mc-mode 1)
-(global-evil-mc-mode 1)
+;; -----------------------------------------------------------------------------
+;; Basics / UI
+;; -----------------------------------------------------------------------------
+(setq inhibit-splash-screen t
+      use-file-dialog nil
+      browse-url-browser-function #'eww-browse-url)
 
+(tool-bar-mode -1)
+(scroll-bar-mode -1)
+(menu-bar-mode -1)
 
-;; Leader keymap
-(defvar my/leader-map (make-sparse-keymap)
-  "Keymap for Space-leader shortcuts.")
+(setq-default tab-width 4)
 
-;; When we jump to a linked note in orgmode, use the same window
-(with-eval-after-load 'org
-  (setf (cdr (assq 'file org-link-frame-setup)) #'find-file))
+;; Line numbers (relative)
+(setq display-line-numbers-type 'relative)
+(global-display-line-numbers-mode 1)
 
+;; Better defaults
+(setq ring-bell-function #'ignore
+      make-backup-files nil
+      auto-save-default nil
+      create-lockfiles nil)
 
-;; Custom functions used lated
-
+;; -----------------------------------------------------------------------------
+;; Small helper functions
+;; -----------------------------------------------------------------------------
 (defun my/open-daily-notes ()
-  "Open org file for daily notes"
+  "Find notes ~/."
   (interactive)
-  (find-file "~/notes/work/standup.org"))
+  (let ((default-directory "~/notes"))
+    (call-interactively #'find-file)))
 
 (defun my/reload-init ()
-  "Reload init file"
+  "Reload init file."
   (interactive)
   (load-file user-init-file))
 
@@ -75,145 +70,211 @@
     (call-interactively #'find-file)))
 
 (defun my/compile-from-root ()
-  "Run compile command from the root"
+  "Run `compile` from the project root if in a project."
   (interactive)
-  (let ((default-directory (project-root (project-current t))))
+  (let ((default-directory
+         (if-let ((proj (project-current)))
+             (project-root proj)
+           default-directory)))
     (call-interactively #'compile)))
 
-
-;; Make sure that my bindings can be used inside grep buffers
-(with-eval-after-load 'evil
-  (dolist (m (list evil-normal-state-map   ; Normal editing
-                   evil-motion-state-map   ; read-only / special buffers
-                   evil-visual-state-map)) ; Selections
-    (define-key m (kbd "SPC") my/leader-map))) ; Add my space keybinding
-
-(with-eval-after-load 'evil
-  (evil-define-key 'normal dired-mode-map (kbd "SPC") my/leader-map)
-  (evil-define-key 'motion dired-mode-map (kbd "SPC") my/leader-map)
-  (evil-define-key 'visual dired-mode-map (kbd "SPC") my/leader-map))
-
-(with-eval-after-load 'evil
-  (define-key evil-normal-state-map (kbd "SPC") my/leader-map))
-
-;; Easily reload the init file
-(define-key my/leader-map (kbd "r r") #'my/reload-init)
-
-;; Open a terminal buffer
 (defun my/terminal ()
-  "Open a terminal with the default shell"
+  "Open a terminal buffer."
   (interactive)
   (ansi-term (getenv "SHELL")))
-(define-key my/leader-map (kbd "b t") #'my/terminal)
 
-;; Buffer
-(define-key my/leader-map (kbd "b w") #'save-buffer) ; save
-(define-key my/leader-map (kbd "b q") #'kill-buffer) ; quit the buffer - not the window!
+;; -----------------------------------------------------------------------------
+;; which-key
+;; -----------------------------------------------------------------------------
 
-;; File
-(define-key my/leader-map (kbd "f t") #'dired)     ; Open file tree
-(define-key my/leader-map (kbd "f s") #'find-file) ; Search files
-(define-key my/leader-map (kbd "f h") #'my/find-file-home)
+(use-package which-key
+  :init
+  (setq which-key-idle-delay 0.35
+        which-key-idle-secondary-delay 0.05
+        which-key-max-description-length 40
+        which-key-add-column-padding 2
+        which-key-separator "  →  "
+        which-key-popup-type 'side-window
+        which-key-side-window-location 'bottom
+        which-key-side-window-max-height 0.30
+        which-key-sort-order 'which-key-key-order-alpha)
 
-;; Cursors
-(define-key my/leader-map (kbd "c b") #'evil-mc-make-cursor-in-visual-selection-beg)
-(define-key my/leader-map (kbd "c e") #'evil-mc-make-cursor-in-visual-selection-end)
-(define-key my/leader-map (kbd "c n") #'evil-mc-make-and-goto-next-match)
-(define-key my/leader-map (kbd "c u") #'evil-mc-undo-last-added-cursor)
-(define-key my/leader-map (kbd "c q") #'evil-mc-undo-all-cursors)
+  :config
+  (which-key-mode 1)
+
+  (set-face-attribute 'which-key-key-face nil :weight 'bold)
+  (set-face-attribute 'which-key-command-description-face nil :height 1.05)
+  (set-face-attribute 'which-key-group-description-face nil :weight 'bold :height 1.10))
 
 
+;; -----------------------------------------------------------------------------
+;; Mono Theme
+;; -----------------------------------------------------------------------------
+(use-package almost-mono-themes
+  :config
+  ;; (load-theme 'almost-mono-black t) 
+  ;; (load-theme 'almost-mono-gray t) ;; My favourite dark theme
+  (load-theme 'almost-mono-cream t) ;; My favourite light theme
+  ;; (load-theme 'almost-mono-white t)
+)
 
+;; -----------------------------------------------------------------------------
+;; Evil + leader keys
+;; -----------------------------------------------------------------------------
+(use-package evil
+  :init
+  (setq evil-want-keybinding nil
+        evil-undo-system 'undo-redo)
+  :config
+  (evil-mode 1))
 
-;; Window
-(define-key my/leader-map (kbd "w v") #'split-window-right)
-(define-key my/leader-map (kbd "w s") #'split-window-below)
-(define-key my/leader-map (kbd "w q") #'delete-window) ; Quit
-(define-key my/leader-map (kbd "w o") #'delete-other-windows)
-;; Windows - Move between them
-(define-key my/leader-map (kbd "w h") #'windmove-left)
-(define-key my/leader-map (kbd "w j") #'windmove-down)
-(define-key my/leader-map (kbd "w k") #'windmove-up)
-(define-key my/leader-map (kbd "w l") #'windmove-right)
+(use-package general
+  :after (evil)
+  :demand t
+  :config
+  (general-create-definer my/leader
+    :states '(normal visual motion)
+    :keymaps 'override
+    :prefix "SPC"
+    :global-prefix "C-SPC")
 
-;; Project
-(define-key my/leader-map (kbd "p f") #'project-find-file)   ; search files by name
-(define-key my/leader-map (kbd "p s") #'project-find-regexp) ; search files by content
-(define-key my/leader-map (kbd "p c") #'my/compile-from-root )  ; compile project
+  ;; Global leader keys (built-in commands + your functions)
+  (my/leader
+    "SPC" '(execute-extended-command :which-key "M-x")
+    "x"   '(execute-extended-command :which-key "M-x")
 
-;; Search
-(define-key my/leader-map (kbd "s s") #'isearch-forward)
-(define-key my/leader-map (kbd "s g") #'rgrep) ; Search grep
-(define-key my/leader-map (kbd "s p") #'previous-error) ; Last search result
+    "b"   '(:ignore t :which-key "buffers")
+    "b w" '(save-buffer :which-key "save")
+    "b q" '(kill-buffer :which-key "kill")
+    "b t" '(my/terminal :which-key "terminal")
 
+	"s"   '(:ignore t :which-key "search")
+	"s g" '(rgrep :which-key "grep (recursive)")
+    "s f" '(find-file :which-key "find file")
+    "s t" '(dired :which-key "dired")
+    "s h" '(my/find-file-home :which-key "home files")
+
+    "w"   '(:ignore t :which-key "windows")
+    "w v" '(split-window-right :which-key "split right")
+    "w s" '(split-window-below :which-key "split below")
+    "w q" '(delete-window :which-key "delete window")
+    "w o" '(delete-other-windows :which-key "only window")
+    "w h" '(windmove-left :which-key "left")
+    "w j" '(windmove-down :which-key "down")
+    "w k" '(windmove-up :which-key "up")
+    "w l" '(windmove-right :which-key "right")
+
+    "p"   '(:ignore t :which-key "project")
+    "p f" '(project-find-file :which-key "find file in project")
+    "p s" '(project-find-regexp :which-key "search")
+    "p c" '(my/compile-from-root :which-key "compile")
+
+    "r"   '(:ignore t :which-key "reload")
+    "r i" '(my/reload-init :which-key "reload init")))
+
+(use-package evil-mc
+  :after evil
+  :config
+  (global-evil-mc-mode 1)
+  :general
+  (my/leader
+    "c"   '(:ignore t :which-key "cursors")
+    "c b" '(evil-mc-make-cursor-in-visual-selection-beg :which-key "cursor beg")
+    "c e" '(evil-mc-make-cursor-in-visual-selection-end :which-key "cursor end")
+    "c n" '(evil-mc-make-and-goto-next-match :which-key "next match")
+    "c u" '(evil-mc-undo-last-added-cursor :which-key "undo last")
+    "c q" '(evil-mc-undo-all-cursors :which-key "undo all")))
+
+;; -----------------------------------------------------------------------------
+;; Completion in buffers
+;; -----------------------------------------------------------------------------
+(use-package corfu
+  :init
+  (setq corfu-auto t
+        corfu-preselect 'prompt)
+  :config
+  (global-corfu-mode 1))
+
+;; -----------------------------------------------------------------------------
 ;; Git
-(define-key my/leader-map (kbd "g g") #'magit-status)
-(define-key my/leader-map (kbd "g c") #'magit-commit-create)
-(define-key my/leader-map (kbd "g l") #'magit-log-current)
-(define-key my/leader-map (kbd "g b") #'magit-branch)
-(define-key my/leader-map (kbd "g p") #'magit-push-current)
-(define-key my/leader-map (kbd "g f") #'magit-fetch)
+;; -----------------------------------------------------------------------------
+(use-package magit
+  :commands (magit-status)
+  :general
+  (my/leader
+    "g"   '(:ignore t :which-key "git")
+    "g g" '(magit-status :which-key "status")
+    "g c" '(magit-commit-create :which-key "commit")
+    "g l" '(magit-log-current :which-key "log")
+    "g b" '(magit-branch :which-key "branch")
+    "g p" '(magit-push-current :which-key "push")
+    "g f" '(magit-fetch :which-key "fetch")))
 
+;; -----------------------------------------------------------------------------
+;; LSP Eglot
+;; -----------------------------------------------------------------------------
+(use-package eglot
+  :hook ((rust-mode go-mode) . eglot-ensure)
+  :general
+  (my/leader
+    "l"   '(:ignore t :which-key "lsp")
+    "l r" '(eglot-rename :which-key "rename")
+    "l a" '(eglot-code-actions :which-key "code actions")
+    "l f" '(eglot-format :which-key "format")
+    "l d" '(xref-find-definitions :which-key "definition")
+    "l e" '(flymake-show-buffer-diagnostics :which-key "diagnostics")
+    "l n" '(flymake-goto-next-error :which-key "next error")
+    "l p" '(flymake-goto-prev-error :which-key "prev error")
+    "l h" '(eldoc-doc-buffer :which-key "help")))
 
-;; General
-(define-key my/leader-map (kbd "x") #'execute-extended-command)
+;; -----------------------------------------------------------------------------
+;; Languages
+;; -----------------------------------------------------------------------------
+(use-package rust-mode)
+(use-package go-mode)
 
- 
-;; Open important files
-(define-key my/leader-map (kbd "o d") #'my/open-daily-notes)
+;; -----------------------------------------------------------------------------
+;; Org Mode
+;; -----------------------------------------------------------------------------
+(use-package org
+  :hook ((org-mode . org-indent-mode)
+         (org-mode . visual-line-mode))
+  :config
+  (with-eval-after-load 'org
+    (setf (cdr (assq 'file org-link-frame-setup)) #'find-file))
+  (setq org-ellipsis " ⤵"
+        org-hide-emphasis-markers t
+        org-src-fontify-natively t
+        org-startup-indented t))
 
-;; LSP
+;; Make org mode buffers look a little prettier
+(use-package org-modern
+  :after org
+  :hook (org-mode . org-modern-mode))
 
-(with-eval-after-load 'rust-mode
-  (add-hook 'rust-mode-hook #'eglot-ensure))
+(use-package org-superstar
+  :after org
+  :hook (org-mode . org-superstar-mode)
+  :init
+  (setq org-superstar-headline-bullets-list '("✿" "✪" "✪" "✺" "✹")
+        org-superstar-prettify-item-bullets t))
 
-(with-eval-after-load 'go-mode
-  (add-hook 'go-mode-hook #'eglot-ensure))
+(use-package org-roam
+  :after org
+  :init
+  (setq org-roam-directory (expand-file-name "~/notes"))
+  :config
+  (org-roam-db-autosync-mode 1)
+  :general
+  (my/leader
+    "n"   '(:ignore t :which-key "notes")
+    "n f" '(org-roam-node-find :which-key "find node")
+    "n i" '(org-roam-node-insert :which-key "insert node")
+    "n c" '(org-roam-capture :which-key "capture")))
 
-;; Stop eldoc from taking up an existing window - always start at the bottom
-(setq eldoc-echo-area-using-multiple-p nil)
-(with-eval-after-load 'eldoc
-  (add-to-list 'display-buffer-alist
-	       '("\\*eldoc\\*"
-		 (display-buffer-in-side-window)
-		 (side . bottom)
-		 (slot . 1)
-		 (window-height . 0.2))))
-
-(define-key my/leader-map (kbd "l r") #'eglot-rename)
-(define-key my/leader-map (kbd "l a") #'eglot-code-actions)
-(define-key my/leader-map (kbd "l f") #'eglot-format)
-(define-key my/leader-map (kbd "l d") #'xref-find-definitions)
-(define-key my/leader-map (kbd "l e") #'flymake-show-buffer-diagnostics)
-(define-key my/leader-map (kbd "l n") #'flymake-goto-next-error)
-(define-key my/leader-map (kbd "l p") #'flymake-goto-prev-error)
-(define-key my/leader-map (kbd "l h") #'eldoc-doc-buffer)
-
-;; Auto complete
-(setq corfu-auto t) ; popup automatically
-(global-corfu-mode 1)
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   '("545827c17d917c9bd2421f9a8d20e93ad628f5f102dbd710db86e8ddbc800b4a"
-     default))
- '(package-selected-packages
-   '(corfu evil evil-mc exec-path-from-shell magit rust-mode
-	   sunburn-theme)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(font-lock-builtin-face ((t (:inherit default))))
- '(font-lock-comment-face ((t (:inherit default :foreground "gray50"))))
- '(font-lock-constant-face ((t (:inherit default))))
- '(font-lock-function-name-face ((t (:inherit default :weight bold))))
- '(font-lock-keyword-face ((t (:inherit default :weight bold))))
- '(font-lock-string-face ((t (:inherit default))))
- '(font-lock-type-face ((t (:inherit default :weight bold))))
- '(font-lock-variable-name-face ((t (:inherit default)))))
+;; -----------------------------------------------------------------------------
+;; Make sure that the path is loaded correctly when in GUI mode
+;; -----------------------------------------------------------------------------
+(use-package exec-path-from-shell
+  :config
+  (exec-path-from-shell-initialize))

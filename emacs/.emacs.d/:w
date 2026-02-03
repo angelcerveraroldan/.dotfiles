@@ -151,7 +151,6 @@
 	"s"   '(:ignore t :which-key "search")
 	"s g" '(rgrep :which-key "grep (recursive)")
     "s f" '(find-file :which-key "find file")
-    "s t" '(dired :which-key "dired")
     "s h" '(my/find-file-home :which-key "home files")
 
     "w"   '(:ignore t :which-key "windows")
@@ -218,9 +217,9 @@
    :states '(normal motion)
    :keymaps 'dired-mode-map
    :prefix "SPC d"
-   "r" '(revert-buffer   :which-key "reload buffer (see new changes)")
-   "d" '(dired-do-delete :which-key "delete file/directory")
-   "c" '(shell-command   :which-key "run shell command from here")))
+   "o" '(dired :which-key "dired")
+   "d" '(dired-do-delete "delete file/directory")
+   "c" '(shell-command "run shell command from here")))
 
 
 (with-eval-after-load 'dired

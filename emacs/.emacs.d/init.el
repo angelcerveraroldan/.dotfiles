@@ -36,6 +36,7 @@
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 (menu-bar-mode -1)
+(fido-mode 1)
 
 (setq-default tab-width 4)
 
@@ -116,7 +117,13 @@
   (load-theme 'almost-mono-gray t) ;; My favourite dark theme
   ;; (load-theme 'almost-mono-cream t) ;; My favourite light theme
   ;; (load-theme 'almost-mono-white t)
-)
+  )
+
+;; -----------------------------------------------------------------------------
+;; Consult package
+;; -----------------------------------------------------------------------------
+(use-package consult
+  :demand t)
 
 ;; -----------------------------------------------------------------------------
 ;; Evil + leader keys
@@ -128,6 +135,7 @@
   :config
   (evil-mode 1))
 
+;; General commands
 (use-package general
   :after (evil)
   :demand t
@@ -146,10 +154,14 @@
     "b"   '(:ignore t :which-key "buffers")
     "b w" '(save-buffer :which-key "save")
     "b q" '(kill-buffer :which-key "kill")
-    "b t" '(my/terminal :which-key "terminal")
+    "b t" '(my/terminal :which-key "open a terminal terminal")
+	"b c" '(async-shell-command :which-key "run terminal command")
+    "b b" '(consult-buffer :which-key "Switch buffers")
 
 	"s"   '(:ignore t :which-key "search")
 	"s g" '(rgrep :which-key "grep (recursive)")
+	"s r" '(consult-ripgrep :which-key "ripgrep (recursive)")
+	"s l" '(consult-line :which-key "search in buffer")
     "s f" '(find-file :which-key "find file")
     "s t" '(dired :which-key "dired")
     "s h" '(my/find-file-home :which-key "home files")
@@ -168,6 +180,7 @@
     "p f" '(project-find-file :which-key "find file in project")
     "p s" '(project-find-regexp :which-key "search")
     "p c" '(my/compile-from-root :which-key "compile")
+    "p i" '(consult-imenu :which-key "imenu")
 
     "r"   '(:ignore t :which-key "reload")
     "r i" '(my/reload-init :which-key "reload init")))
@@ -261,11 +274,19 @@
          (org-mode . visual-line-mode))
   :config
   (with-eval-after-load 'org
+	(require 'ox-md) ;; Allows to export org files as markdown using C-c C-e m {M|...}
     (setf (cdr (assq 'file org-link-frame-setup)) #'find-file))
   (setq org-ellipsis " ⤵"
         org-hide-emphasis-markers t
         org-src-fontify-natively t
         org-startup-indented t))
+
+;; Where to look for todos
+(setq org-agenda-files
+	  (list "~/notes" "~/notes/roam"))
+
+;; Where to write new todos
+(setq org-default-notes-file "~/notes/inbox.org")
 
 ;; Make org mode buffers look a little prettier
 (use-package org-modern

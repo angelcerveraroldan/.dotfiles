@@ -36,14 +36,13 @@
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 (menu-bar-mode -1)
-(fido-mode 1)
 
 (setq-default tab-width 4)
 
 ;; Line numbers (relative)
 (setq display-line-numbers-type 'relative)
 (global-display-line-numbers-mode 1)
-
+;; 
 ;; Better defaults
 (setq ring-bell-function #'ignore
       make-backup-files nil
@@ -109,21 +108,75 @@
 
 
 ;; -----------------------------------------------------------------------------
-;; Mono Theme
+;; Theme
 ;; -----------------------------------------------------------------------------
-(use-package almost-mono-themes
-  :config
-  ;; (load-theme 'almost-mono-black t) 
-  (load-theme 'almost-mono-gray t) ;; My favourite dark theme
-  ;; (load-theme 'almost-mono-cream t) ;; My favourite light theme
-  ;; (load-theme 'almost-mono-white t)
-  )
+(condition-case err
+    (load (expand-file-name "theme.el" user-emacs-directory))
+  (error
+   (message "Theme config error: %s" err)))
+
 
 ;; -----------------------------------------------------------------------------
 ;; Consult package
 ;; -----------------------------------------------------------------------------
 (use-package consult
   :demand t)
+
+(setq xref-show-xrefs-function #'consult-xref
+      xref-show-definitions-function #'consult-xref)
+
+;; -----------------------------------------------------------------------------
+;; Save history between restarts
+;; -----------------------------------------------------------------------------
+(use-package savehist
+  :init
+  (savehist-mode 1))
+
+;; -----------------------------------------------------------------------------
+;; TODO
+;; -----------------------------------------------------------------------------
+(use-package vertico
+  :init
+  (vertico-mode 1)
+  :custom
+  (vertico-cycle t))
+
+;; -----------------------------------------------------------------------------
+;; Lets you find things regardless of order
+;; -----------------------------------------------------------------------------
+(use-package orderless
+  :custom
+  ;; Orderless everywhere, but keep files feeling normal-ish
+  (completion-styles '(orderless basic))
+  (completion-category-defaults nil)
+  (completion-category-overrides '((file (styles partial-completion)))))
+
+;; -----------------------------------------------------------------------------
+;; TODO
+;; -----------------------------------------------------------------------------
+(use-package marginalia
+  :init
+  (marginalia-mode 1))
+
+;; Make Consult play nicely with Corfu for in-buffer completion
+(with-eval-after-load 'consult
+  (setq completion-in-region-function
+        (lambda (&rest args)
+          (apply (if (bound-and-true-p corfu-mode)
+                     #'consult-completion-in-region
+                   #'completion--in-region)
+                 args))))
+
+;; -----------------------------------------------------------------------------
+;; Embark: context actions on minibuffer candidates + search results
+;; -----------------------------------------------------------------------------
+(use-package embark
+  :bind (("C-." . embark-act)
+         ("C-;" . embark-dwim)
+         ("C-h B" . embark-bindings)))
+
+(use-package embark-consult
+  :after (embark consult))
 
 ;; -----------------------------------------------------------------------------
 ;; Evil + leader keys
@@ -157,14 +210,22 @@
     "b t" '(my/terminal :which-key "open a terminal terminal")
 	"b c" '(async-shell-command :which-key "run terminal command")
     "b b" '(consult-buffer :which-key "Switch buffers")
+	"b i" '(consult-imenu :which-key "imenu (this buffer)")
+	"b I" '(consult-imenu-multi :which-key "imenu (all buffers)")
 
 	"s"   '(:ignore t :which-key "search")
+	"s s" '(set-mark-command :which-key "save this spot (set a mark)")
 	"s g" '(rgrep :which-key "grep (recursive)")
 	"s r" '(consult-ripgrep :which-key "ripgrep (recursive)")
 	"s l" '(consult-line :which-key "search in buffer")
     "s f" '(find-file :which-key "find file")
     "s t" '(dired :which-key "dired")
     "s h" '(my/find-file-home :which-key "home files")
+	"s o" '(consult-outline :which-key "outline (headings)")
+	"s m" '(consult-mark :which-key "marks")
+	"s j" '(consult-jump-list :which-key "jump list")
+	"s M" '(consult-global-mark :which-key "global marks")
+	"s y" '(consult-yank-pop :which-key "yank history")
 
     "w"   '(:ignore t :which-key "windows")
     "w v" '(split-window-right :which-key "split right")
@@ -181,9 +242,25 @@
     "p s" '(project-find-regexp :which-key "search")
     "p c" '(my/compile-from-root :which-key "compile")
     "p i" '(consult-imenu :which-key "imenu")
+	"p b" '(consult-bookmark :which-key "bookmarks")
+	"p r" '(consult-register :which-key "registers")
 
     "r"   '(:ignore t :which-key "reload")
     "r i" '(my/reload-init :which-key "reload init")))
+
+;; -----------------------------------------------------------------------------
+;; Better help buffers
+;; -----------------------------------------------------------------------------
+(use-package helpful
+  :after general
+  :commands (helpful-callable helpful-variable helpful-command helpful-key)
+  :general
+  (my/leader
+    "h"   '(:ignore t :which-key "help")
+    "h f" '(helpful-callable :which-key "function")
+    "h v" '(helpful-variable :which-key "variable")
+    "h k" '(helpful-key      :which-key "key")
+    "h c" '(helpful-command  :which-key "command")))
 
 (use-package evil-mc
   :after evil
@@ -270,12 +347,18 @@
 ;; Org Mode
 ;; -----------------------------------------------------------------------------
 (use-package org
+  :demand t
   :hook ((org-mode . org-indent-mode)
          (org-mode . visual-line-mode))
   :config
   (with-eval-after-load 'org
 	(require 'ox-md) ;; Allows to export org files as markdown using C-c C-e m {M|...}
-    (setf (cdr (assq 'file org-link-frame-setup)) #'find-file))
+    (setf (cdr (assq 'file org-link-frame-setup)) #'find-file)
+	(setq org-modern-star '("◉" "○" "✸" "✿")
+        org-modern-hide-stars t
+        org-modern-fold-stars t
+        org-ellipsis "…"))
+
   (setq org-ellipsis " ⤵"
         org-hide-emphasis-markers t
         org-src-fontify-natively t
@@ -293,19 +376,15 @@
   :after org
   :hook (org-mode . org-modern-mode))
 
-(use-package org-superstar
-  :after org
-  :hook (org-mode . org-superstar-mode)
-  :init
-  (setq org-superstar-headline-bullets-list '("✿" "✪" "✪" "✺" "✹")
-        org-superstar-prettify-item-bullets t))
 
 (use-package org-roam
   :after org
+  :demand t
   :init
   (setq org-roam-directory (expand-file-name "~/notes/roam"))
   :config
   (org-roam-db-autosync-mode 1)
+  (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
   :general
   (my/leader
     "n"   '(:ignore t :which-key "notes")
@@ -319,3 +398,10 @@
 (use-package exec-path-from-shell
   :config
   (exec-path-from-shell-initialize))
+
+;; -----------------------------------------------------------------------------
+;; Local changes
+;; -----------------------------------------------------------------------------
+(let ((local-file (expand-file-name "local.el" user-emacs-directory)))
+  (when (file-exists-p local-file)
+    (load local-file 'noerror 'nomessage)))

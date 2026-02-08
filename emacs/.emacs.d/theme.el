@@ -28,3 +28,6 @@
 ;; (use-package nyan-mode
 ;;  :config
 ;;  (nyan-mode 1))
+
+(set-frame-parameter nil 'alpha-background 95)
+(add-to-list 'default-frame-alist '(alpha-background . 95))

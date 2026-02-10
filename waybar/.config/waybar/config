@@ -23,8 +23,9 @@
 
     "sway/workspaces": {
         "disable-scroll": true,
-        "all-outputs": true,
+        "all-outputs": false,
         "format": "{icon}",
+		"separate-outputs": true,
         "format-icons": {
             "3": "3",
             "4": "4",
@@ -44,7 +45,7 @@
 
     "sway/window": {
         "format": "{}",
-        //"all-outputs": true, // Active window shows only on active display when commented
+        "all-outputs": true, // Active window shows only on active display when commented
         "max-length": 120
     },
 

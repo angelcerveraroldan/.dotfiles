@@ -19,6 +19,10 @@ set $menu nwg-drawer
 # Power Menu
 set $powermenu ~/.config/sway/scripts/power_menu.sh
 
+# Move a workspace to another monitor
+bindsym $mod+greater move workspace to output right
+bindsym $mod+less move workspace to output left
+
 ### Key bindings
 #
 # Basics:
@@ -204,7 +208,7 @@ set $powermenu ~/.config/sway/scripts/power_menu.sh
     # Launch the file explorer
     bindsym $mod+n exec thunar
 
-    bindsym $mod+e exec emacs
+    bindsym $mod+e exec emacsclient -c
 
     # Launch the browser
     bindsym $mod+o exec firefox

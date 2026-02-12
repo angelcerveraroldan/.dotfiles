@@ -9,7 +9,7 @@
  
 (use-package almost-mono-themes
    :config
-   (load-theme my/dark-theme t))
+   (load-theme my/light-theme t))
 
 ;; -----------------------------------------------------------------------------
 ;; Easy theme switcher
@@ -25,9 +25,9 @@
 ;; (use-package doom-themes)
 
 ;; Very important, uncomment the next few lines for emacs to not break!!!!!
-;; (use-package nyan-mode
-;;  :config
-;;  (nyan-mode 1))
+(use-package nyan-mode
+ :config
+ (nyan-mode 1))
 
 (set-frame-parameter nil 'alpha-background 95)
 (add-to-list 'default-frame-alist '(alpha-background . 95))

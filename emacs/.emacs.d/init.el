@@ -42,7 +42,7 @@
 ;; Line numbers (relative)
 (setq display-line-numbers-type 'relative)
 (global-display-line-numbers-mode 1)
-;; 
+
 ;; Better defaults
 (setq ring-bell-function #'ignore
       make-backup-files nil
@@ -81,7 +81,7 @@
 (defun my/terminal ()
   "Open a terminal buffer."
   (interactive)
-  (ansi-term (getenv "SHELL")))
+  (vterm (getenv "SHELL")))
 
 ;; -----------------------------------------------------------------------------
 ;; which-key
@@ -179,6 +179,25 @@
   :after (embark consult))
 
 ;; -----------------------------------------------------------------------------
+;; VTerm
+;; -----------------------------------------------------------------------------
+(use-package vterm
+  :ensure t)
+
+;; -----------------------------------------------------------------------------
+;; Spelling
+;; -----------------------------------------------------------------------------
+;; For this package to work, you need to install some deps. Look at their docs,
+;; if in arch based, the following is enough as of right now:
+;;
+;; yay -S enchant pkgconf
+;; -----------------------------------------------------------------------------
+(use-package jinx
+  :ensure t
+  :config
+  (add-hook 'emacs-startup-hook #'global-jinx-mode))
+
+;; -----------------------------------------------------------------------------
 ;; Evil + leader keys
 ;; -----------------------------------------------------------------------------
 (use-package evil
@@ -203,6 +222,12 @@
   (my/leader
     "SPC" '(execute-extended-command :which-key "M-x")
     "x"   '(execute-extended-command :which-key "M-x")
+
+    "m"     '(:ignore t :which-key "[m]isc")
+    "m s"   '(:ignore t :which-key "[s]pelling")
+    "m s w" '(jinx-correct-word :which-key "correct [w]ord")
+    "m s a" '(jinx-correct-all :which-key "correct [a]ll words")
+
 
     "b"   '(:ignore t :which-key "buffers")
     "b w" '(save-buffer :which-key "save")
@@ -391,6 +416,7 @@
     "n f" '(org-roam-node-find :which-key "find node")
     "n i" '(org-roam-node-insert :which-key "insert node")
     "n c" '(org-roam-capture :which-key "capture")))
+
 
 ;; -----------------------------------------------------------------------------
 ;; Matrix client

@@ -1,5 +1,0 @@
-[terminal]
-shell = { program = "/bin/zsh", args = ["-l"] }
-
-[font]
-normal = { family = "BlexMono Nerd Font" } 

@@ -27,7 +27,9 @@
 ;; Very important, uncomment the next few lines for emacs to not break!!!!!
 (use-package nyan-mode
  :config
- (nyan-mode 1))
+ (nyan-mode 1)
+ (nyan-toggle-wavy-trail)
+ (nyan-start-animation))
 
 (set-frame-parameter nil 'alpha-background 95)
 (add-to-list 'default-frame-alist '(alpha-background . 95))

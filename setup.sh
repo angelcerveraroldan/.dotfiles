@@ -1,241 +1,204 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_DIR="${DOTFILES:-$HOME/.dotfiles}"
+readonly REPO_DIR="${DOTFILES:-$HOME/.dotfiles}"
+readonly SETUP_DIR="$REPO_DIR/setup.d"
 
-log_info()
-{
-	echo ">> $*"
+source "$SETUP_DIR/core.sh"
+source "$SETUP_DIR/packages.sh"
+source "$SETUP_DIR/emacs.sh"
+source "$SETUP_DIR/neovim.sh"
+source "$SETUP_DIR/sway.sh"
+source "$SETUP_DIR/keyd.sh"
+
+declare -a DEFAULT_COMPONENTS=(neovim emacs sway)
+declare -a ONLY_COMPONENTS=()
+declare -a SELECTED_COMPONENTS=()
+declare -gA COMPONENT_VARIANTS=()
+
+PULL=false
+
+usage() {
+	cat <<'EOF'
+Usage: setup.sh [options]
+
+Options:
+  --pull                 Update dotfiles repo before setup (if online and clean)
+  --only <list>           Comma-separated list of components to set up
+  --only=emacs,neovim     Same as above
+  --variant name=variant  Set component variant (repeatable)
+  -h, --help              Show this help
+
+Examples:
+  ./setup.sh
+  ./setup.sh --only emacs
+  ./setup.sh --only neovim --variant neovim=nightly
+EOF
 }
 
-# Check if we can use the arch installer
-ensure_arch() 
-{
-    if ! command -v pacman >/dev/null 2>&1; then
-	    return 1
-    else
-	    return 0
-    fi
+validate_component() {
+	local name="$1"
+	local comp
+	for comp in emacs neovim sway keyd; do
+		if [[ "$comp" == "$name" ]]; then
+			return 0
+		fi
+	done
+
+	die "Unknown component: $name"
 }
 
-# Check if we can use the fedora installer
-ensure_fedora()
-{
-    if ! command -v dnf >/dev/null 2>&1; then
-	    return 1
-    else
-	    return 0
-    fi
+add_only_list() {
+	local list="$1"
+	local item
+	local name
+	local variant
+	local -a items=()
 
+	IFS=',' read -r -a items <<< "$list"
+
+	for item in "${items[@]}"; do
+		if [[ -z "$item" ]]; then
+			continue
+		fi
+
+		if [[ "$item" == *@* ]]; then
+			name="${item%%@*}"
+			variant="${item#*@}"
+			COMPONENT_VARIANTS["$name"]="$variant"
+		else
+			name="$item"
+		fi
+
+		validate_component "$name"
+		ONLY_COMPONENTS+=("$name")
+	done
 }
 
-ensure_os()
-{
-	if ! (ensure_fedora || ensure_arch) then
-		log_info "Operating system not supported"
-		exit 1
+add_variant() {
+	local spec="$1"
+	local name="${spec%%=*}"
+	local variant="${spec#*=}"
+
+	if [[ -z "$name" || -z "$variant" || "$name" == "$variant" ]]; then
+		die "Invalid --variant value: $spec (expected name=variant)"
 	fi
+
+	validate_component "$name"
+	COMPONENT_VARIANTS["$name"]="$variant"
 }
 
-stow_arch_install()
-{
-	log_info "Installing stow (Arch)"
-	sudo pacman -S --needed --noconfirm stow
+parse_args() {
+	while [[ "$#" -gt 0 ]]; do
+		case "$1" in
+			--pull)
+				PULL=true
+				;;
+			--only)
+				shift
+				[[ "$#" -gt 0 ]] || die "--only requires a value"
+				add_only_list "$1"
+				;;
+			--only=*)
+				add_only_list "${1#*=}"
+				;;
+			--variant)
+				shift
+				[[ "$#" -gt 0 ]] || die "--variant requires name=variant"
+				add_variant "$1"
+				;;
+			--variant=*)
+				add_variant "${1#*=}"
+				;;
+			-h|--help)
+				usage
+				exit 0
+				;;
+			*)
+				die "Unknown argument: $1"
+				;;
+		esac
+		shift
+	done
 }
 
-stow_fedora_install()
-{
-	log_info "Installing stow (Fedora)"
-	sudo dnf install stow
-}
+build_component_list() {
+	local -a input=()
+	local -A seen=()
+	local comp
 
-stow_install()
-{
-	if command -v stow >/dev/null 2>&1
-	then
-		return
-	fi
+	SELECTED_COMPONENTS=()
 
-	# Install differently depending on package manager
-	if ensure_arch; then
-		stow_arch_install
-	elif ensure_fedora; then
-		stow_fedora_install
+	if [[ "${#ONLY_COMPONENTS[@]}" -gt 0 ]]; then
+		input=("${ONLY_COMPONENTS[@]}")
 	else
-		log_info "Error: Operating system not supported. pacman or dnf are needed"
+		input=("${DEFAULT_COMPONENTS[@]}")
 	fi
 
-	if ! command -v stow >/dev/null 2>&1
-	then
-		echo "ERROR: Stow was not installed correctly."
-		exit 1
-	fi
+	for comp in "${input[@]}"; do
+		if [[ -z "${seen[$comp]-}" ]]; then
+			SELECTED_COMPONENTS+=("$comp")
+			seen["$comp"]=1
+		fi
+	done
 }
 
-neovim_install()
-{
-	if command -v nvim >/dev/null 2>&1
-	then
-		log_info "Neovim already installed"
+pull_latest() {
+	require_cmd git
+
+	if ! git -C "$REPO_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+		die "Not a git repository: $REPO_DIR"
+	fi
+
+	if ! has_internet; then
+		log_info "Skipping git pull (no internet)"
 		return
 	fi
 
-	log_info "Installing neovim (Arch)"
-
-	if ensure_arch
-	then
-		sudo pacman -S --needed --noconfirm neovim
-	elif ensure_fedora
-	then
-		sudo dnf install neovim
-	fi
-}
-
-# Optionally install dependencies to make all features in neovim work.
-#
-# This installs:
-# - ripgrep
-# - fd
-neovim_optional_deps()
-{
-	log_info "Installing optional Neovim dependencies (ripgrep, fd)"
-	sudo pacman -S --needed --noconfirm ripgrep fd
-}
-
-neovim_setup()
-{
-	neovim_install
-	neovim_config
-}
-
-neovim_config()
-{
-	log_info "Stowing neovim config"
-
-	cd "$REPO_DIR"
-	stow -Rvt "$HOME" nvim
-}
-
-
-keyd_minimum()
-{
-	if ! command -v make >/dev/null 2>&1
-	then
-		log_info "Error: Make not installed"
+	if [[ -n "$(git -C "$REPO_DIR" status --porcelain)" ]]; then
+		log_info "Skipping git pull (uncommitted changes)"
 		return
 	fi
 
-	if ! command -v systemctl >/dev/null 2>&1
-	then
-		log_info "Error: systemctl not found"
-		return
-	fi
-
-
+	log_info "Updating dotfiles repo"
+	git -C "$REPO_DIR" pull --ff-only
 }
 
-keyd_install()
-{
-	log_info "Installing keyd"
-
-	tmpdir="$(mktemp -d)"
-	git clone https://github.com/rvaiya/keyd "$tmpdir/keyd"
-
-	(
-		cd "$tmpdir/keyd"
-		make
-		sudo make install
-		sudo systemctl enable keyd
-	)
-
-	rm -rf "$tmpdir"
+run_component() {
+	case "$1" in
+		emacs)
+			setup_emacs
+			;;
+		neovim)
+			setup_neovim
+			;;
+		sway)
+			setup_sway
+			;;
+		keyd)
+			setup_keyd
+			;;
+		*)
+			die "Unknown component: $1"
+			;;
+	esac
 }
 
-keyd_config()
-{
-	log_info "Stowing keyboard configuration"
-	cd "$REPO_DIR"
-	sudo stow -Rvt / keyd
-	
-
-	log_info "Restarting keyd to load the newly generated config"
-	sudo systemctl restart keyd
-}
-
-keyd_setup()
-{
-	if ! command -v keyd >/dev/null 2>&1
-	then
-		keyd_install
-	fi
-
-	keyd_config
-}
-
-sway_config()
-{
-	log_info "Stowing sway config"
-
-	cd "$REPO_DIR"
-	stow -Rvt "$HOME" sway
-}
-
-sway_install()
-{
-	if command -v sway >/dev/null 2>&1
-	then
-		log_info "Sway already installed"
-		return
-	fi
-
-	log_info "Installing Sway"
-
-	if ensure_arch
-	then
-		sudo pacman -S sway
-	elif ensure_fedora
-	then
-		sudo dnf install sway
-	fi
-}
-
-sway_setup()
-{
-	if ! command -v sway >/dev/null 2>&1
-	then
-		sway_install
-	fi
-
-	sway_config
-}
-
-alacritty_config()
-{
-	log_info "Stowing alacritty config"
-
-	cd "$REPO_DIR"
-	stow -Rvt "$HOME" alacritty
-}
-
-alacritty_setup()
-{
-	if ! command -v alacritty >/dev/null 2>&1
-	then
-		alacritty_install
-	fi
-
-	alacritty_config
-}
-
-main()
-{
-	ensure_os
-
+main() {
+	parse_args "$@"
+	init_pkg_manager
 	stow_install
 
-	keyd_setup
-	neovim_setup
-	sway_setup
+	if [[ "$PULL" == "true" ]]; then
+		pull_latest
+	fi
+
+	build_component_list
+
+	local comp
+	for comp in "${SELECTED_COMPONENTS[@]}"; do
+		run_component "$comp"
+	done
 }
 
 main "$@"

@@ -194,6 +194,8 @@
 ;; -----------------------------------------------------------------------------
 (use-package jinx
   :ensure t
+  :custom
+  (jinx-languages "en_GB")
   :config
   (add-hook 'emacs-startup-hook #'global-jinx-mode))
 

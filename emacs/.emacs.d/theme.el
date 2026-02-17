@@ -15,10 +15,10 @@
 ;; Easy theme switcher
 ;; -----------------------------------------------------------------------------
 (defun my/choose-theme ()
-  "Disable current themes and choose a new one."
+  "Choose a theme with live preview while navigating."
   (interactive)
-  (mapc #'disable-theme custom-enabled-themes)
-  (call-interactively #'load-theme))
+  ;; Consult already provides theme selection with live preview
+  (call-interactively #'consult-theme))
 
 ;; Uncomment to install a lot of nice themes (space x my/choose-theme enter, then
 ;; you will see a lot of themes, you can choose any)

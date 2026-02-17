@@ -29,6 +29,8 @@
 ;; -----------------------------------------------------------------------------
 ;; Basics / UI
 ;; -----------------------------------------------------------------------------
+(setq require-final-newline t)
+
 (setq inhibit-splash-screen t
       use-file-dialog nil
       browse-url-browser-function #'eww-browse-url)
@@ -82,6 +84,14 @@
   "Open a terminal buffer."
   (interactive)
   (vterm (getenv "SHELL")))
+
+;; -----------------------------------------------------------------------------
+;; Compilation - ANSI color support
+;; -----------------------------------------------------------------------------
+(require 'ansi-color)
+
+;; Enable ANSI colors in compilation buffers
+(add-hook 'compilation-filter-hook 'ansi-color-compilation-filter)
 
 ;; -----------------------------------------------------------------------------
 ;; which-key
@@ -209,6 +219,22 @@
   :config
   (evil-mode 1))
 
+;; Evil Collection - Evil bindings for many modes
+(use-package evil-collection
+  :after evil
+  :config
+  (evil-collection-init))
+
+;; Evil Surround - Add/change/delete surrounding delimiters
+(use-package evil-surround
+  :after evil
+  :config
+  (global-evil-surround-mode 1))
+
+;; Avy - Jump to visible text quickly
+(use-package avy
+  :commands (avy-goto-char avy-goto-char-2 avy-goto-line avy-goto-word-1))
+
 ;; General commands
 (use-package general
   :after (evil)
@@ -226,6 +252,7 @@
     "x"   '(execute-extended-command :which-key "M-x")
 
     "m"     '(:ignore t :which-key "[m]isc")
+    "m d"   '(dictionary-lookup-definition :which-key "[d]efinition")
     "m s"   '(:ignore t :which-key "[s]pelling")
     "m s w" '(jinx-correct-word :which-key "correct [w]ord")
     "m s a" '(jinx-correct-all :which-key "correct [a]ll words")
@@ -234,7 +261,7 @@
     "b"   '(:ignore t :which-key "buffers")
     "b w" '(save-buffer :which-key "save")
     "b q" '(kill-buffer :which-key "kill")
-    "b t" '(my/terminal :which-key "open a terminal terminal")
+    "b t" '(my/terminal :which-key "open a terminal")
 	"b c" '(async-shell-command :which-key "run terminal command")
     "b b" '(consult-buffer :which-key "Switch buffers")
 	"b i" '(consult-imenu :which-key "imenu (this buffer)")
@@ -253,6 +280,8 @@
 	"s j" '(consult-jump-list :which-key "jump list")
 	"s M" '(consult-global-mark :which-key "global marks")
 	"s y" '(consult-yank-pop :which-key "yank history")
+	"s w" '(avy-goto-word-1 :which-key "jump to word")
+	"s J" '(avy-goto-char-2 :which-key "jump to 2 chars")
 
     "w"   '(:ignore t :which-key "windows")
     "w v" '(split-window-right :which-key "split right")
@@ -330,28 +359,43 @@
 ;; -----------------------------------------------------------------------------
 ;; Dired
 ;; -----------------------------------------------------------------------------
+;; evil-collection provides excellent dired bindings:
+;; - hjkl for navigation
+;; - RET/l to open, h to go up
+;; - d to flag for deletion, x to execute
+;; - + to create directory
+;; - C to copy, R to rename
+;; - g r to refresh
+;; - ! to run shell command
+;; - o to open in other window
+
+;; wdired: Edit filenames directly in dired buffer for mass renaming
 (with-eval-after-load 'dired
+  (require 'wdired)
+  (setq wdired-allow-to-change-permissions t) ; Can also edit permissions
+  
+  ;; Add keybinding for entering wdired mode
   (general-define-key
-   :states '(normal motion)
+   :states 'normal
    :keymaps 'dired-mode-map
-   :prefix "SPC d"
-   "r" '(revert-buffer   :which-key "reload buffer (see new changes)")
-   "d" '(dired-do-delete :which-key "delete file/directory")
-   "c" '(shell-command   :which-key "run shell command from here")))
-
-
-(with-eval-after-load 'dired
-  ;; Ensure Evil keys behave in Dired (local map only)
-  (evil-define-key 'normal dired-mode-map
-    (kbd "RET") #'dired-find-file
-    (kbd "h")   #'dired-up-directory
-    (kbd "l")   #'dired-find-file))
+   "E" 'wdired-change-to-wdired-mode) ; Press E to start editing filenames
+  
+  ;; In wdired mode, use standard Evil editing, then C-c C-c to apply or C-c C-k to abort
+  (general-define-key
+   :states 'normal
+   :keymaps 'wdired-mode-map
+   "ZZ" 'wdired-finish-edit    ; Save changes (like :wq)
+   "ZQ" 'wdired-abort-changes)) ; Abort changes (like :q!)
 
 ;; -----------------------------------------------------------------------------
 ;; LSP Eglot
 ;; -----------------------------------------------------------------------------
 (use-package eglot
-  :hook ((rust-mode go-mode) . eglot-ensure)
+  :hook ((rust-mode go-mode python-mode) . eglot-ensure)
+  :config
+  ;; Configure Pyright as the Python LSP server
+  (add-to-list 'eglot-server-programs
+               '(python-mode . ("pyright-langserver" "--stdio")))
   :general
   (my/leader
     "l"   '(:ignore t :which-key "lsp")

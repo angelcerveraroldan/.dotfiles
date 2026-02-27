@@ -7,6 +7,9 @@ set $down j
 set $up k
 set $right l
 
+set $browsermain qutebrowser
+set $browseralt  firefox
+
 # Set default terminal emulator
 set $term footclient
 
@@ -29,6 +32,10 @@ bindsym $mod+less move workspace to output left
 #
     # Launch the terminal
     bindsym $mod+Return exec $term
+	bindsym $mod+Shift+t exec emacsclient -c -a emacs -e '(vterm)'
+
+	# Launch browser
+    bindsym $mod+s exec $browsermain
 
     # Open the power menu
     bindsym $mod+Shift+p exec $powermenu

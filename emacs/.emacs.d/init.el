@@ -41,10 +41,6 @@
 
 (setq-default tab-width 4)
 
-;; Line numbers (relative)
-(setq display-line-numbers-type 'relative)
-(global-display-line-numbers-mode 1)
-
 ;; Better defaults
 (setq ring-bell-function #'ignore
       make-backup-files nil
@@ -433,7 +429,13 @@
   (setq org-ellipsis " ⤵"
         org-hide-emphasis-markers t
         org-src-fontify-natively t
-        org-startup-indented t))
+        org-startup-indented t)
+
+  ;; Automatically render images in org mode
+  (setq org-startup-with-inline-images t))
+
+(add-hook 'org-mode-hook '(lambda () (setq fill-column 80)))
+(add-hook 'org-mode-hook 'auto-fill-mode)
 
 ;; Where to look for todos
 (setq org-agenda-files
@@ -476,6 +478,8 @@
   :config
   (exec-path-from-shell-initialize))
 
+
+(add-to-list 'auto-mode-alist '("\\.cm\\'" . calamars-mode))
 ;; -----------------------------------------------------------------------------
 ;; Local changes
 ;; -----------------------------------------------------------------------------

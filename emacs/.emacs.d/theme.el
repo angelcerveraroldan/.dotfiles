@@ -1,15 +1,20 @@
-;; -----------------------------------------------------------------------------
-;; Theme config - Change this to make it prettier
-; -----------------------------------------------------------------------------
+;;; theme.el --- Theme configuration -*- lexical-binding: t -*-
 
-;; Default dark and light themes - they have almost no color. Change these to the
-;; themes you like the most!
-(setq my/dark-theme  'almost-mono-gray)
-(setq my/light-theme 'almost-mono-cream)
- 
-(use-package almost-mono-themes
-   :config
-   (load-theme my/light-theme t))
+;; -----------------------------------------------------------------------------
+;; Theme config
+;; -----------------------------------------------------------------------------
+
+;; Register custom themes directory
+(add-to-list 'custom-theme-load-path
+             (expand-file-name "themes" user-emacs-directory))
+
+;; almost-mono-themes is the base package; our custom themes layer on top
+(use-package almost-mono-themes :defer t)
+
+;; Load the light accent theme by default.
+;; Both mono-accent-light and mono-accent-dark are available via
+;; my/choose-theme (SPC x my/choose-theme) or M-x consult-theme.
+(load-theme 'mono-accent-light t)
 
 ;; -----------------------------------------------------------------------------
 ;; Easy theme switcher
@@ -17,19 +22,15 @@
 (defun my/choose-theme ()
   "Choose a theme with live preview while navigating."
   (interactive)
-  ;; Consult already provides theme selection with live preview
   (call-interactively #'consult-theme))
 
-;; Uncomment to install a lot of nice themes (space x my/choose-theme enter, then
-;; you will see a lot of themes, you can choose any)
-;; (use-package doom-themes)
-
-;; Very important, uncomment the next few lines for emacs to not break!!!!!
 (use-package nyan-mode
- :config
- (nyan-mode 1)
- (nyan-toggle-wavy-trail)
- (nyan-start-animation))
+  :config
+  (nyan-mode 1)
+  (nyan-toggle-wavy-trail)
+  (nyan-start-animation))
 
 (set-frame-parameter nil 'alpha-background 95)
 (add-to-list 'default-frame-alist '(alpha-background . 95))
+
+;;; theme.el ends here

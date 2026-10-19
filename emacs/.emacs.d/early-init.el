@@ -1,12 +1,8 @@
 ;;; early-init.el --- Early initialization -*- lexical-binding: t -*-
 
-;; Defer GC during startup -- reset after init
+;; Defer GC during startup -- gcmh takes over after init (see init.el)
 (setq gc-cons-threshold most-positive-fixnum
       gc-cons-percentage 0.6)
-(add-hook 'emacs-startup-hook
-          (lambda ()
-            (setq gc-cons-threshold (* 16 1024 1024)   ; 16 MB
-                  gc-cons-percentage 0.1)))
 
 ;; Faster subprocess reads (default 4k is a bottleneck for LSP)
 (setq read-process-output-max (* 1024 1024))  ; 1 MB

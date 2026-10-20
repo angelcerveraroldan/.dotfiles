@@ -23,6 +23,8 @@ declare -A PKG_MAP_PACMAN=(
 	[rust-analyzer]=rust-analyzer
 	[go]=go
 	[gopls]=gopls
+	[niri]=niri
+	[dms]=dms
 )
 
 declare -A PKG_MAP_DNF=(
@@ -48,6 +50,8 @@ declare -A PKG_MAP_DNF=(
 	[rust-analyzer]=rust-analyzer
 	[go]=golang
 	[gopls]=golang-x-tools-gopls
+	[niri]=niri
+	[dms]=dms
 )
 
 declare -A PKG_MAP_APT=(
@@ -73,6 +77,8 @@ declare -A PKG_MAP_APT=(
 	[rust-analyzer]=rust-analyzer
 	[go]=golang-go
 	[gopls]=golang-gopls
+	[niri]=niri
+	[dms]=dms
 )
 
 init_pkg_manager() {

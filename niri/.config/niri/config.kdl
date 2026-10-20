@@ -1,0 +1,221 @@
+// Minimal niri configuration
+// Based on default-config.kdl from https://github.com/niri-wm/niri
+
+input {
+    touchpad {
+        tap
+        natural-scroll
+    }
+}
+
+// Layout configuration
+layout {
+    gaps 5
+
+    // Customize focus ring appearance
+    focus-ring {
+        width 2
+        active-color "#7fc8ff"
+        inactive-color "#505050"
+    }
+
+    // Default column width: 50% of screen width
+    default-column-width { proportion 0.5; }
+
+    // Customize preset column widths
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+}
+
+// Window rules
+window-rule {
+    geometry-corner-radius 0
+}
+
+// Key bindings
+binds {
+    // Show hotkey overlay
+    Mod+Shift+Slash { show-hotkey-overlay; }
+
+    // Applications
+    Mod+Return	hotkey-overlay-title="Open Terminal"	{ spawn "alacritty"; }
+    Mod+e		hotkey-overlay-title="Open Emacs"		{ spawn "emacsclient" "-c"; }
+    Mod+d		hotkey-overlay-title="Run Application"	{ spawn "fuzzel"; }
+
+    Mod+q	repeat=false { close-window; }
+
+	// focus change
+    Mod+Left  { focus-column-left; }
+    Mod+h     { focus-column-left; }
+    Mod+Right { focus-column-right; }
+    Mod+l     { focus-column-right; }
+    Mod+Down  { focus-window-down; }
+    Mod+j     { focus-window-down; }
+    Mod+Up    { focus-window-up; }
+    Mod+k     { focus-window-up; }
+
+	// move windows
+    Mod+Ctrl+Left	{ move-column-left; }
+    Mod+Ctrl+h		{ move-column-left; }
+    Mod+Ctrl+Right	{ move-column-right; }
+    Mod+Ctrl+l		{ move-column-right; }
+    Mod+Ctrl+Down	{ move-window-down; }
+    Mod+Ctrl+j		{ move-window-down; }
+    Mod+Ctrl+Up		{ move-window-up; }
+    Mod+Ctrl+k		{ move-window-up; }
+
+    // Column width adjustment
+    Mod+Minus { set-column-width "-10%"; }
+    Mod+Equal { set-column-width "+10%"; }
+
+    // Window height adjustment
+    Mod+Shift+Minus { set-window-height "-10%"; }
+    Mod+Shift+Equal { set-window-height "+10%"; }
+
+    // Column width presets
+    Mod+r            { switch-preset-column-width; }
+    Mod+Shift+r      { switch-preset-column-width-back; }
+    Mod+Ctrl+r       { reset-window-height; }
+    Mod+Ctrl+Shift+r { switch-preset-window-height; }
+
+    // Maximize and fullscreen
+    Mod+f       { maximize-column; }
+    Mod+Shift+f { fullscreen-window; }
+
+    // DMS - Task Manager (replaces Mod+m for maximize-window-to-edges)
+    Mod+M hotkey-overlay-title="Task Manager" {
+        spawn "dms" "ipc" "call" "processlist" "focusOrToggle";
+    }
+
+    // Center column
+    Mod+c       { center-column; }
+    Mod+Ctrl+c  { center-visible-columns; }
+
+    // Floating and tabbed
+    Mod+Shift+v { switch-focus-between-floating-and-tiling; }
+    Mod+w       { toggle-column-tabbed-display; }
+
+    // DMS - Clipboard Manager (replaces Mod+v for window floating)
+    Mod+V hotkey-overlay-title="Clipboard Manager" {
+        spawn "dms" "ipc" "call" "clipboard" "toggle";
+    }
+
+    // Workspace navigation
+    Mod+U              { focus-workspace-down; }
+    Mod+I              { focus-workspace-up; }
+
+    // Move column to workspace
+    Mod+Ctrl+U         { move-column-to-workspace-down; }
+    Mod+Ctrl+I         { move-column-to-workspace-up; }
+    Mod+Ctrl+Page_Down { move-column-to-workspace-down; }
+    Mod+Ctrl+Page_Up   { move-column-to-workspace-up; }
+
+    // Move workspace
+    Mod+Shift+U			{ move-workspace-down; }
+    Mod+Shift+I			{ move-workspace-up; }
+    Mod+Shift+Page_Down { move-workspace-down; }
+    Mod+Shift+Page_Up   { move-workspace-up; }
+
+    // Workspace switching by number
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+
+    // Move column to workspace by number
+    Mod+Ctrl+1 { move-column-to-workspace 1; }
+    Mod+Ctrl+2 { move-column-to-workspace 2; }
+    Mod+Ctrl+3 { move-column-to-workspace 3; }
+    Mod+Ctrl+4 { move-column-to-workspace 4; }
+    Mod+Ctrl+5 { move-column-to-workspace 5; }
+    Mod+Ctrl+6 { move-column-to-workspace 6; }
+    Mod+Ctrl+7 { move-column-to-workspace 7; }
+    Mod+Ctrl+8 { move-column-to-workspace 8; }
+    Mod+Ctrl+9 { move-column-to-workspace 9; }
+
+    // Monitor navigation
+    Mod+Shift+Left  { focus-monitor-left; }
+    Mod+Shift+Right { focus-monitor-right; }
+    Mod+Shift+Up    { focus-monitor-up; }
+    Mod+Shift+Down  { focus-monitor-down; }
+    Mod+Shift+h     { focus-monitor-left; }
+    Mod+Shift+l     { focus-monitor-right; }
+    Mod+Shift+k     { focus-monitor-up; }
+    Mod+Shift+j     { focus-monitor-down; }
+
+    // Move column to monitor
+    Mod+Shift+n { move-column-to-monitor-right; }
+    Mod+Shift+p { move-column-to-monitor-left; }
+
+    // Column consumption/expulsion
+    Mod+BracketLeft  { consume-or-expel-window-left; }
+    Mod+BracketRight { consume-or-expel-window-right; }
+
+    // Consume window into column and expel from column
+    Mod+Period { expel-window-from-column; }
+
+    // DMS - Settings (replaces Mod+Comma for consume-window-into-column)
+    Mod+Comma hotkey-overlay-title="Settings" {
+        spawn "dms" "ipc" "call" "settings" "focusOrToggle";
+    }
+
+    // Expand column to available width
+    Mod+Ctrl+f { expand-column-to-available-width; }
+
+    // Screenshot
+    Print      { screenshot; }
+    Ctrl+Print { screenshot-screen; }
+    Alt+Print  { screenshot-window; }
+
+    // Media keys - Volume (using wpctl)
+    XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+ -l 1.0"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1-"; }
+    XF86AudioMute        allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"; }
+    XF86AudioMicMute     allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
+
+    // Media keys - Playback (using playerctl)
+    XF86AudioPlay  allow-when-locked=true { spawn-sh "playerctl play-pause"; }
+    XF86AudioPause allow-when-locked=true { spawn-sh "playerctl play-pause"; }
+    XF86AudioStop  allow-when-locked=true { spawn-sh "playerctl stop"; }
+    XF86AudioPrev  allow-when-locked=true { spawn-sh "playerctl previous"; }
+    XF86AudioNext  allow-when-locked=true { spawn-sh "playerctl next"; }
+
+    // Brightness (using brightnessctl)
+    XF86MonBrightnessUp   allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "+10%"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "10%-"; }
+
+    // Overview
+    Mod+O repeat=false { toggle-overview; }
+
+    // Keyboard shortcuts inhibitor toggle
+    Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+
+    // DMS - Application Launcher
+    Mod+Space hotkey-overlay-title="Application Launcher" {
+        spawn "dms" "ipc" "call" "spotlight" "toggle";
+    }
+
+    // DMS - Notification Center
+    Mod+N hotkey-overlay-title="Notification Center" {
+        spawn "dms" "ipc" "call" "notifications" "toggle";
+    }
+}
+
+// DMS layer rules
+layer-rule {
+    match namespace="^quickshell$"
+    place-within-backdrop true
+}
+
+layer-rule {
+    match namespace="dms:blurwallpaper"
+    place-within-backdrop true
+}

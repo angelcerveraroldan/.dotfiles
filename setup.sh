@@ -9,6 +9,7 @@ source "$SETUP_DIR/packages.sh"
 source "$SETUP_DIR/emacs.sh"
 source "$SETUP_DIR/neovim.sh"
 source "$SETUP_DIR/sway.sh"
+source "$SETUP_DIR/niri.sh"
 source "$SETUP_DIR/keyd.sh"
 
 declare -a DEFAULT_COMPONENTS=(neovim emacs sway)
@@ -39,7 +40,7 @@ EOF
 validate_component() {
 	local name="$1"
 	local comp
-	for comp in emacs neovim sway keyd; do
+	for comp in emacs neovim sway niri keyd; do
 		if [[ "$comp" == "$name" ]]; then
 			return 0
 		fi
@@ -174,6 +175,9 @@ run_component() {
 			;;
 		sway)
 			setup_sway
+			;;
+		niri)
+			setup_niri
 			;;
 		keyd)
 			setup_keyd

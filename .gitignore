@@ -1,0 +1,28 @@
+# Emacs — installed packages
+/emacs/.emacs.d/elpa/
+
+# Emacs — native compilation and generated files
+/emacs/.emacs.d/eln-cache/
+/emacs/.emacs.d/**/*.elc
+/emacs/.emacs.d/**/*.eln
+/emacs/.emacs.d/treesit/
+
+# Emacs — generated state and caches
+/emacs/.emacs.d/auto-save-list/
+/emacs/.emacs.d/transient/
+/emacs/.emacs.d/url/
+/emacs/.emacs.d/recentf
+/emacs/.emacs.d/savehist
+/emacs/.emacs.d/bookmarks
+/emacs/.emacs.d/places
+/emacs/.emacs.d/tramp
+/emacs/.emacs.d/package-quickstart.el
+
+# Emacs — temporary files
+/emacs/.emacs.d/*~
+/emacs/.emacs.d/**/*~
+
+# Org-roam SQLite database
+org-roam.db
+org-roam.db-shm
+org-roam.db-wal

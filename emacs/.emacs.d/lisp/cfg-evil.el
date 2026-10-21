@@ -114,6 +114,9 @@ Works regardless of cursor position within the word."
     "d o" '(my/diary-date :which-key "open date")
     "d f" '(my/diary-find :which-key "find entry")
     "d r" '(my/diary-range :which-key "date range")
+    "d p" '(my/diary-personal-today :which-key "personal today")
+    "d P" '(my/diary-personal-yesterday :which-key "personal yesterday")
+    "d R" '(my/diary-personal-range :which-key "personal date range")
 
     "f"   '(fill-region :which-key "[f]ill region")
 

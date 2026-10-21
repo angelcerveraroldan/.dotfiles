@@ -1,14 +1,16 @@
-;;; cfg-diary.el --- Work diary: daily log files in ~/notes/diary -*- lexical-binding: t -*-
+;;; cfg-diary.el --- Daily journals in work/ and personal/ -*- lexical-binding: t -*-
 
 ;;; Commentary:
-;; Daily log files in `my/notes-directory'/diary/<date>.org, with helpers to
+;; Daily files in work/daily/<date>.org (and optional personal/daily/) with helpers to
 ;; open today/yesterday/a specific date, browse entries, and view a date
 ;; range in a single read-only buffer.  Leader keybindings ("SPC d ...") are
 ;; defined in `cfg-evil'.
 
 ;;; Code:
 
-(defvar my/diary-directory (expand-file-name "diary" my/notes-directory)
+(require 'cl-lib)
+
+(defvar my/diary-directory (expand-file-name "work/daily" my/notes-directory)
   "Directory for daily diary org files.")
 
 (defun my/diary--ensure-dir ()
@@ -27,7 +29,7 @@
   (let ((file (my/diary--file-for-date date)))
     (find-file file)
     (when (= (buffer-size) 0)
-      (insert (format-time-string "#+title: %A %d %B %Y\n#+date: %Y-%m-%d\n\n* Log\n** " date))
+      (insert (format-time-string "#+title: %Y-%m-%d\n\n* Today\n" date))
       (save-buffer))))
 
 (defun my/diary-today ()
@@ -36,9 +38,14 @@
   (my/diary--open-date (current-time)))
 
 (defun my/diary-yesterday ()
-  "Open yesterday's diary entry."
+  "Open yesterday's diary entry, including across DST transitions."
   (interactive)
-  (my/diary--open-date (time-subtract (current-time) (* 24 60 60))))
+  (require 'calendar)
+  (pcase-let ((`(,month ,day ,year)
+               (calendar-gregorian-from-absolute
+                (1- (calendar-absolute-from-gregorian
+                     (calendar-current-date))))))
+    (my/diary--open-date (encode-time 0 0 12 day month year))))
 
 (defun my/diary-date (date-str)
   "Open diary entry for a specific date (prompted with org date picker)."
@@ -54,15 +61,22 @@
     (call-interactively #'find-file)))
 
 (defun my/diary--dates-in-range (start end)
-  "Return a list of date strings (YYYY-MM-DD) from START to END inclusive."
-  (let ((dates '())
-        (current (encode-time (parse-time-string (concat start " 00:00:00"))))
-        (end-time (encode-time (parse-time-string (concat end " 00:00:00"))))
-        (one-day (* 24 60 60)))
-    (while (not (time-less-p end-time current))
-      (push (format-time-string "%Y-%m-%d" current) dates)
-      (setq current (time-add current one-day)))
-    (nreverse dates)))
+  "Return YYYY-MM-DD dates from START through END, inclusive.
+Use calendar days rather than 24-hour intervals, so DST is safe."
+  (require 'calendar)
+  (cl-labels ((absolute (date)
+                (calendar-absolute-from-gregorian
+                 (list (string-to-number (substring date 5 7))
+                       (string-to-number (substring date 8 10))
+                       (string-to-number (substring date 0 4))))))
+    (let ((first (absolute start))
+          (last (absolute end))
+          (dates nil))
+      (cl-loop for day from first to last do
+               (let ((ymd (calendar-gregorian-from-absolute day)))
+                 (push (format "%04d-%02d-%02d"
+                               (nth 2 ymd) (nth 0 ymd) (nth 1 ymd)) dates)))
+      (nreverse dates))))
 
 (defun my/diary-range (start end)
   "Show diary entries from START to END date in a temporary buffer."
@@ -72,7 +86,10 @@
      (list s e)))
   (my/diary--ensure-dir)
   (let ((dates (my/diary--dates-in-range start end))
-        (buf (get-buffer-create (format "*diary %s to %s*" start end)))
+        (buf (get-buffer-create
+              (format "*diary %s %s to %s*"
+                      (file-relative-name my/diary-directory my/notes-directory)
+                      start end)))
         (found 0))
     (with-current-buffer buf
       (read-only-mode -1)
@@ -103,6 +120,35 @@
       (org-mode)
       (read-only-mode 1))
     (switch-to-buffer buf)))
+
+;; Scope-specific convenience functions.  The work journal stays the default
+;; for existing SPC d keybindings; personal is never created on work machines.
+(defun my/diary--personal-directory ()
+  "Return personal daily directory, or signal if it is not checked out."
+  (unless (file-directory-p (expand-file-name "personal" my/notes-directory))
+    (user-error "Personal notes are not checked out on this computer"))
+  (expand-file-name "personal/daily" my/notes-directory))
+
+(defun my/diary-personal-today ()
+  "Open today's personal journal."
+  (interactive)
+  (let ((my/diary-directory (my/diary--personal-directory)))
+    (my/diary-today)))
+
+(defun my/diary-personal-yesterday ()
+  "Open yesterday's personal journal."
+  (interactive)
+  (let ((my/diary-directory (my/diary--personal-directory)))
+    (my/diary-yesterday)))
+
+(defun my/diary-personal-range (start end)
+  "Display personal daily notes from START to END."
+  (interactive
+   (let ((s (org-read-date nil nil nil "Start date: "))
+         (e (org-read-date nil nil nil "End date: ")))
+     (list s e)))
+  (let ((my/diary-directory (my/diary--personal-directory)))
+    (my/diary-range start end)))
 
 (provide 'cfg-diary)
 ;;; cfg-diary.el ends here

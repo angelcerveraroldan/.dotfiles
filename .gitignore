@@ -17,6 +17,7 @@
 /emacs/.emacs.d/places
 /emacs/.emacs.d/tramp
 /emacs/.emacs.d/package-quickstart.el
+/emacs/.emacs.d/history
 
 # Emacs — temporary files
 /emacs/.emacs.d/*~

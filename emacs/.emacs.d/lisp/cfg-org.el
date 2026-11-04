@@ -82,6 +82,9 @@
     "a c" '(org-capture :which-key "capture to inbox")
     "a r" '(my/org-refresh-agenda-files :which-key "refresh files")))
 
+(add-hook 'org-mode-hook '(lambda () (setq fill-column 80)))
+(add-hook 'org-mode-hook 'turn-on-auto-fill)
+
 (use-package org-modern
   :after org
   :hook (org-mode . org-modern-mode)

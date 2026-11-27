@@ -20,7 +20,10 @@ layout {
     }
 
     // Default column width: 50% of screen width
-    default-column-width { proportion 0.5; }
+    default-column-width { proportion 0.75; }
+
+	center-focused-column "always"
+    always-center-single-column
 
     // Customize preset column widths
     preset-column-widths {
@@ -131,15 +134,15 @@ binds {
     Mod+9 { focus-workspace 9; }
 
     // Move column to workspace by number
-    Mod+Ctrl+1 { move-column-to-workspace 1; }
-    Mod+Ctrl+2 { move-column-to-workspace 2; }
-    Mod+Ctrl+3 { move-column-to-workspace 3; }
-    Mod+Ctrl+4 { move-column-to-workspace 4; }
-    Mod+Ctrl+5 { move-column-to-workspace 5; }
-    Mod+Ctrl+6 { move-column-to-workspace 6; }
-    Mod+Ctrl+7 { move-column-to-workspace 7; }
-    Mod+Ctrl+8 { move-column-to-workspace 8; }
-    Mod+Ctrl+9 { move-column-to-workspace 9; }
+    Mod+Shift+1 { move-column-to-workspace 1; }
+    Mod+Shift+2 { move-column-to-workspace 2; }
+    Mod+Shift+3 { move-column-to-workspace 3; }
+    Mod+Shift+4 { move-column-to-workspace 4; }
+    Mod+Shift+5 { move-column-to-workspace 5; }
+    Mod+Shift+6 { move-column-to-workspace 6; }
+    Mod+Shift+7 { move-column-to-workspace 7; }
+    Mod+Shift+8 { move-column-to-workspace 8; }
+    Mod+Shift+9 { move-column-to-workspace 9; }
 
     // Monitor navigation
     Mod+Shift+Left  { focus-monitor-left; }
@@ -219,3 +222,6 @@ layer-rule {
     match namespace="dms:blurwallpaper"
     place-within-backdrop true
 }
+
+// DMS Include Configs
+include "dms/input.kdl"

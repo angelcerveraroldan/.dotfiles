@@ -13,5 +13,9 @@ input {
         natural-scroll
         dwt
     }
+    keyboard {
+        xkb {
+            layout "us"
+        }
+    }
 }
-
